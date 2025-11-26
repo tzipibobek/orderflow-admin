@@ -1,0 +1,62 @@
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Product {
+  id         Int         @id @default(autoincrement())
+  name       String
+  price      Int         @default(0)
+  isActive   Boolean     @default(true)
+  orderItems OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@index([isActive])
+}
+
+model Customer {
+  id             Int      @id @default(autoincrement())
+  name           String
+  address        String
+  accountBalance Int      @default(0)
+  orders         Order[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Order {
+  id          Int          @id @default(autoincrement())
+  customerId  Int
+  customer    Customer     @relation(fields: [customerId], references: [id])
+  items       OrderItem[]
+  total       Int          @default(0)
+  status      OrderStatus  @default(TO_DELIVER)
+  deliveredAt DateTime?
+  cancelledAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([status, deliveredAt])
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int     @default(1)
+  unitPrice Int     @default(0)
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+enum OrderStatus {
+  DELIVERED
+  TO_DELIVER
+  CANCELLED
+}
